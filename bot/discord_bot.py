@@ -1,5 +1,6 @@
 import os
 import logging
+import discord
 from bot.riot_tracker import track_player_progress
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -13,7 +14,11 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 # Initialize bot
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.message_content = True  # Required for reading message content
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
 
 @bot.event
 async def on_ready():
