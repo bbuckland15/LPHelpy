@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from bot.riot_api import get_player_by_id
+from bot.riot_api import get_player_by_puuid  # Use get_player_by_puuid
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -22,10 +22,15 @@ def save_tracked(data):
 def get_solo_queue_entry(entries):
     return next((q for q in entries if q['queueType'] == 'RANKED_SOLO_5x5'), None)
 
-def track_player_progress(summoner_id):
+def track_player_progress(puuid):
     tracked = load_tracked()
 
-    ranked_data = get_player_by_id(summoner_id)
+    # Fetch ranked data using PUUID directly
+    ranked_data = get_player_by_puuid(puuid)  # Use PUUID directly
+    if not ranked_data:
+        logger.error(f"Failed to retrieve ranked data for PUUID {puuid}")
+        return "⚠️ Failed to retrieve ranked data from Riot API."
+
     solo = get_solo_queue_entry(ranked_data)
 
     if not solo:
@@ -40,7 +45,7 @@ def track_player_progress(summoner_id):
     }
 
     # Use summoner name as key for readability
-    name_key = solo['summonerName']
+    name_key = solo.get('summonerName', 'Unknown Summoner')
 
     if name_key not in tracked:
         tracked[name_key] = current

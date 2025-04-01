@@ -3,7 +3,7 @@ import logging
 import hikari  
 import lightbulb
 from dotenv import load_dotenv
-from bot.riot_api import get_player_puuid_by_riot_tag, get_player_id_by_puuid, get_player_by_id
+from bot.riot_api import get_player_puuid_by_riot_tag, get_player_by_puuid  # Corrected import
 from bot.riot_tracker import track_player_progress
 
 # Load environment variables
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
     token=os.getenv("DISCORD_TOKEN"),
     prefix="!",
-    intents=hikari.Intents.ALL,  # Use hikari.Intents.ALL instead of lightbulb
-    default_enabled_guilds=(854544102917931018,)  # Replace with your Discord server ID for faster testing
+    intents=hikari.Intents.ALL,  # Use hikari.Intents.ALL for intents
+    default_enabled_guilds=(854544102917931018,)  # Your server ID for faster slash command syncing
 )
 
 # Slash command: trackrank
@@ -31,17 +31,14 @@ async def trackrank(ctx: lightbulb.Context) -> None:
     name = ctx.options.name
     tag = ctx.options.tag
 
+    # Fetch PUUID using the Riot ID (name and tag)
     puuid = get_player_puuid_by_riot_tag(name, tag)
     if not puuid:
         await ctx.respond("❌ Summoner not found via Riot ID.")
         return
 
-    summoner_id = get_player_id_by_puuid(puuid)
-    if not summoner_id:
-        await ctx.respond("❌ Could not retrieve Summoner ID from PUUID.")
-        return
-
-    result = track_player_progress(summoner_id)
+    # Track progress directly using PUUID
+    result = track_player_progress(puuid)  # Pass PUUID directly
     await ctx.respond(result)
 
 # Slash command: summoner
@@ -54,17 +51,14 @@ async def summoner(ctx: lightbulb.Context) -> None:
     name = ctx.options.name
     tag = ctx.options.tag
 
+    # Fetch PUUID using the Riot ID (name and tag)
     puuid = get_player_puuid_by_riot_tag(name, tag)
     if not puuid:
         await ctx.respond("❌ Summoner not found via Riot ID.")
         return
 
-    summoner_id = get_player_id_by_puuid(puuid)
-    if not summoner_id:
-        await ctx.respond("❌ Could not retrieve Summoner ID from PUUID.")
-        return
-
-    ranked_data = get_player_by_id(summoner_id)
+    # Get ranked data using PUUID directly
+    ranked_data = get_player_by_puuid(puuid)  # Use PUUID directly
     if not ranked_data:
         await ctx.respond("⚠️ Could not retrieve ranked data.")
         return

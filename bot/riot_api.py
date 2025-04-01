@@ -15,6 +15,7 @@ PLATFORM_REGION = 'na1'
 REGIONAL_ROUTING = 'americas'
 
 def safe_api_call(func, *args, **kwargs):
+    """Helper to make safe Riot API calls with error handling."""
     try:
         return func(*args, **kwargs)
     except ApiError as err:
@@ -23,9 +24,9 @@ def safe_api_call(func, *args, **kwargs):
         logger.exception("Unexpected error during API call")
     return None
 
-def get_player_by_id(summoner_id):
-    """Returns ranked info from encrypted Summoner ID."""
-    return safe_api_call(lol_watcher.league.by_summoner, PLATFORM_REGION, summoner_id)
+def get_player_by_puuid(puuid):
+    """Returns ranked info from PUUID (replacing the deprecated summoner_id approach)."""
+    return safe_api_call(lol_watcher.league.by_puuid, PLATFORM_REGION, puuid)
 
 def get_player_puuid_by_riot_tag(name, tag):
     """Returns PUUID from Riot ID (name + tag)."""
@@ -33,12 +34,4 @@ def get_player_puuid_by_riot_tag(name, tag):
     if data:
         logger.info(f"Found PUUID for {name}#{tag}: {data['puuid']}")
         return data['puuid']
-    return None
-
-def get_player_id_by_puuid(puuid):
-    """Returns encrypted Summoner ID from a PUUID."""
-    data = safe_api_call(lol_watcher.summoner.by_puuid, PLATFORM_REGION, puuid)
-    if data:
-        logger.info(f"Found Summoner ID for PUUID {puuid}: {data['id']}")
-        return data['id']
     return None
