@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 # Initialize Lightbulb Bot
-bot = lightbulb.Bot(
+bot = lightbulb.BotApp(
     token=os.getenv("DISCORD_TOKEN"),
     prefix="!",
     intents=lightbulb.Intents.ALL,
