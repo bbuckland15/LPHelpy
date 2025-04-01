@@ -1,0 +1,6 @@
+runtime: python310
+entrypoint: python main.py
+
+env_variables:
+  DISCORD_TOKEN: "your_discord_token"
+  RIOT_API_KEY: "your_riot_key"
