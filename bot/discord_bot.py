@@ -1,56 +1,63 @@
 import os
 import logging
-import discord
-from bot.riot_tracker import track_player_progress
-from discord.ext import commands
 from dotenv import load_dotenv
-from bot.riot_api import get_player_id_by_name, get_player_by_id
+import lightbulb
 
-# Load .env variables
+from bot.riot_api import get_player_puuid_by_riot_tag, get_player_id_by_puuid, get_player_by_id
+from bot.riot_tracker import track_player_progress
+
+# Load environment variables
 load_dotenv()
 
-# Setup logging
+# Set up logging
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-# Initialize bot
-intents = discord.Intents.default()
-intents.message_content = True  # Required for reading message content
+# Initialize Lightbulb Bot
+bot = lightbulb.Bot(
+    token=os.getenv("DISCORD_TOKEN"),
+    prefix="!",
+    intents=lightbulb.Intents.ALL,
+    default_enabled_guilds=(854544102917931018,)  # Replace with your Discord server ID for faster testing
+)
 
-bot = commands.Bot(command_prefix="!", intents=intents)
-
-
-@bot.event
-async def on_ready():
-    logger.info(f'{bot.user} has connected to Discord!')
-
+# Slash command: trackrank
 @bot.command()
-async def summoner(ctx, *, name):
-    """Lookup a summoner's rank by name."""
-    summoner_id = get_player_id_by_name(name)
+@lightbulb.option("summoner_name", "Summoner name to track", type=str)
+@lightbulb.command("trackrank", "Track a summoner's ranked progress")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def trackrank(ctx: lightbulb.Context) -> None:
+    name = ctx.options.summoner_name
+    result = track_player_progress(name)
+    await ctx.respond(result)
+
+# Slash command: summoner
+@bot.command()
+@lightbulb.option("tag", "Summoner tag (e.g. NA1)", type=str)
+@lightbulb.option("name", "Summoner name (e.g. Faker)", type=str)
+@lightbulb.command("summoner", "Get summoner level by Riot ID")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def summoner(ctx: lightbulb.Context) -> None:
+    name = ctx.options.name
+    tag = ctx.options.tag
+
+    puuid = get_player_puuid_by_riot_tag(name, tag)
+    if not puuid:
+        await ctx.respond("❌ Summoner not found via Riot ID.")
+        return
+
+    summoner_id = get_player_id_by_puuid(puuid)
     if not summoner_id:
-        await ctx.send("❌ Summoner not found.")
+        await ctx.respond("❌ Could not retrieve Summoner ID from PUUID.")
         return
 
     ranked_data = get_player_by_id(summoner_id)
     if not ranked_data:
-        await ctx.send("⚠️ Could not retrieve ranked data.")
+        await ctx.respond("⚠️ Could not retrieve ranked data.")
         return
 
-    # Find solo queue entry
     solo = next((q for q in ranked_data if q['queueType'] == 'RANKED_SOLO_5x5'), None)
     if solo:
-        await ctx.send(f"{solo['summonerName']} is **{solo['tier']} {solo['rank']}** with {solo['leaguePoints']} LP.")
+        await ctx.respond(f"{solo['summonerName']} is **{solo['tier']} {solo['rank']}** with {solo['leaguePoints']} LP.")
     else:
-        await ctx.send("🧾 No solo queue rank found.")
-
-@bot.command()
-async def trackrank(ctx, *, name):
-    """Tracks a summoner's solo queue rank progress."""
-    result = track_player_progress(name)
-    await ctx.send(result)
-
-
-def run_bot():
-    token = os.getenv("DISCORD_TOKEN")
-    bot.run(token)
+        await ctx.respond("🧾 No solo queue data found.")

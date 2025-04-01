@@ -1,7 +1,8 @@
 import json
 import os
 import logging
-from bot.riot_api import get_player_id_by_name, get_player_by_id
+from bot.riot_api import get_player_by_id
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
