@@ -3,7 +3,7 @@ import logging
 import hikari  
 import lightbulb
 from dotenv import load_dotenv
-from bot.riot_api import get_player_puuid_by_riot_tag, get_player_by_puuid  # Corrected import
+from bot.riot_api import get_player_puuid_by_riot_tag, get_ranked_data_by_puuid
 from bot.riot_tracker import track_player_progress
 
 # Load environment variables
@@ -58,7 +58,7 @@ async def summoner(ctx: lightbulb.Context) -> None:
         return
 
     # Get ranked data using PUUID directly
-    ranked_data = get_player_by_puuid(puuid)  # Use PUUID directly
+    ranked_data = get_ranked_data_by_puuid(puuid)  # Use PUUID directly
     if not ranked_data:
         await ctx.respond("⚠️ Could not retrieve ranked data.")
         return
